@@ -14,5 +14,5 @@
 2. Run the app
 
    ```
-   $ streamlit run streamlit_Home.py
+   $ streamlit run Home.py
    ```
