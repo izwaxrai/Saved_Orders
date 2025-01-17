@@ -13,18 +13,10 @@ Testing the E-Kiosk
 
 
 
-Key Features
-Convenience: Enables users to save their favorite meal combinations, reducing the need to re-enter their preferences every time.
-
-Time-Saving: Perfect for busy diners who want to place orders quickly.
-
-Personalization: Tailors the experience by allowing users to customize and save their preferred orders.
-
-
 How It Works
-Users can select their desired food and beverage items through the e-kiosk interface.
-After customizing their order, they can choose their food items and save it by clicking the button.
-To reorder, users simply select their saved order and confirm.
+- Users can select their desired food and beverage items through the e-kiosk interface.
+- After customizing their order, they can choose their food items and save it by clicking the button.
+- To reorder, users simply select their saved order and confirm.
 
 
 
