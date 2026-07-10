@@ -1,207 +1,157 @@
 import streamlit as st
-import pandas as pd
+import random
 
+# ---- CONFIGURATION & WINDOW SETTINGS ----
 st.set_page_config(
-    page_title="BurgerThing",
+    page_title="BurgerThing - Favorites Kiosk",
     page_icon="🍔",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
-st.sidebar.title("Order Here 👇")
+# ---- PERSISTENT STATE MANAGEMENT ----
+if "saved_orders" not in st.session_state:
+    st.session_state.saved_orders = []
+if "current_tray" not in st.session_state:
+    st.session_state.current_tray = []
 
-menu = st.sidebar.selectbox("Choose your order", ["Main", "Burgers", "Desserts", "Drinks", "Pizzas", "Sides"])
+# ---- SIDEBAR: ORDER PROFILE & QUICK RECALL ----
+st.sidebar.title("👤 Customer Profiles")
 
-if "orders" not in st.session_state:
-    st.session_state.orders = []
-
-def display_order_form():
-    with st.sidebar.form(key="order_form"):
-        st.write("Select items to save an order:")
-        selected_items = st.multiselect(
-            label="Which items would you like to save?",
-            options=[
-                "Classic Cheeseburger", "Mushroom Swiss Burger", "Chicken Burger",
-                "Avocado Grilled Chicken Burger", "Cheesecake", "Ice Cream Sundae",
-                "Fruit Tart", "Tiramisu", "Soda", "Orange Juice",
-                "Chocolate Latte With Whipped Cream", "Coffee", "Meat Lovers Pizza",
-                "Hawaiian Pizza", "Pepperoni Pizza", "Margarita Pizza", "Garlic Bread",
-                "French Fries", "Mozzarella Sticks", "Salad"
-            ]
-        )
-        
-        submit = st.form_submit_button(label="Save Order")
-
-        if submit and selected_items:
-            st.session_state.orders.append(selected_items)
-            st.sidebar.success("Order saved successfully!")
-
-st.sidebar.title("Order Management")
-display_order_form()
-
-if st.session_state.orders:
-    st.sidebar.title("Saved Orders")
-    for i, order in enumerate(st.session_state.orders):
-        st.sidebar.write(f"Order {i+1}: {', '.join(order)}")
-
-# --- MAIN MENU ---
-if menu == "Main":
-    st.image("https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&auto=format&fit=crop&q=60")
-    st.title("🍟 Welcome to BurgerThing 🍔")
-    st.write("Combo Promotions & Deals")
+# Section 1: Save Current Build
+st.sidebar.subheader("💾 Save This Configuration")
+with st.sidebar.form(key="save_profile_form"):
+    profile_name = st.text_input("Favorite Label (e.g., 'My Usual', 'Dad's Cheat Meal'):", "")
+    items_to_bundle = st.multiselect(
+        "Select items to bundle into this preset:",
+        options=[
+            "Classic Cheeseburger", "Bacon Flame BBQ", "Chicken Burger",
+            "Avocado Grilled Burger", "Birthday Cake Cupcakes", "Ice Cream Sundae",
+            "Fountain Soda", "Fresh Orange Juice", "Pepperoni Pizza", "Garlic Bread Fries"
+        ]
+    )
+    save_submit = st.form_submit_button("Lock Order Preset")
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=60")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=60")
-    with col3:
-        st.image("https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&auto=format&fit=crop&q=60")
-        
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400&auto=format&fit=crop&q=60")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop&q=60")
-    with col3:
-        st.image("https://images.unsplash.com/photo-1576107232684-1279f390859f?w=400&auto=format&fit=crop&q=60")
+    if save_submit:
+        if profile_name and items_to_bundle:
+            st.session_state.saved_orders.append({"name": profile_name, "items": items_to_bundle})
+            st.sidebar.success(f"Preset '{profile_name}' created!")
+        else:
+            st.sidebar.warning("Please provide a name and select items.")
 
-# --- BURGERS ---
-elif menu == "Burgers":
-    st.title("Burgers Menu 🍔")
-    st.write("Here are our amazing burgers!")
+st.sidebar.write("---")
+
+# Section 2: Display and Recall Saved Combos
+st.sidebar.subheader("⭐ Load Quick Combos")
+if not st.session_state.saved_orders:
+    st.sidebar.info("No saved favorites found yet. Build one above!")
+else:
+    for idx, preset in enumerate(st.session_state.saved_orders):
+        st.sidebar.write(f"🔹 **{preset['name']}**")
+        st.sidebar.write(f", ".join(preset["items"]))
+        if st.sidebar.button(f"Load Preset #{idx+1}", key=f"load_pre_{idx}"):
+            st.session_state.current_tray = list(preset["items"])
+            st.sidebar.toast(f"Loaded {preset['name']} to your screen!")
+            st.rerun()
+
+# ---- MAIN INTERFACE LAYOUT ----
+st.title("🍔 BurgerThing Self-Service E-Kiosk")
+st.write("### Browse Categories & Build Your Custom Tray")
+
+# Interactive category selection tabs on main container screen
+tab_burgers, tab_desserts, tab_drinks, tab_pizzas = st.tabs(["🔥 Burgers", "🍰 Desserts", "🥤 Drinks", "🍕 Specialty Items"])
+
+# --- BURGERS CATEGORY ---
+with tab_burgers:
+    st.write("#### Flame Grilled Selections")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Classic Cheeseburger** — `$5.99`")
+        if st.button("Add Classic Cheeseburger", key="add_b1"):
+            st.session_state.current_tray.append("Classic Cheeseburger")
+            st.rerun()
+            
+    with col2:
+        st.image("https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Bacon Flame BBQ** — `$7.29`")
+        if st.button("Add Bacon Flame BBQ", key="add_b2"):
+            st.session_state.current_tray.append("Bacon Flame BBQ")
+            st.rerun()
+
+# --- DESSERTS CATEGORY ---
+with tab_desserts:
+    st.write("#### Sweet Treats")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("https://images.unsplash.com/photo-1519869325930-281384150729?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Birthday Cake Cupcakes** — `$3.99`")
+        if st.button("Add Birthday Cake Cupcakes", key="add_e1"):
+            st.session_state.current_tray.append("Birthday Cake Cupcakes")
+            st.rerun()
+            
+    with col2:
+        st.image("https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Ice Cream Sundae** — `$3.25`")
+        if st.button("Add Ice Cream Sundae", key="add_e2"):
+            st.session_state.current_tray.append("Ice Cream Sundae")
+            st.rerun()
+
+# --- DRINKS CATEGORY ---
+with tab_drinks:
+    st.write("#### Refreshing Beverages")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Fountain Soda** — `$1.99`")
+        if st.button("Add Fountain Soda", key="add_d1"):
+            st.session_state.current_tray.append("Fountain Soda")
+            st.rerun()
+            
+    with col2:
+        st.image("https://images.unsplash.com/photo-1613478223719-2ab802602423?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Fresh Orange Juice** — `$2.50`")
+        if st.button("Add Fresh Orange Juice", key="add_d2"):
+            st.session_state.current_tray.append("Fresh Orange Juice")
+            st.rerun()
+
+# --- SPECIALTY ITEMS ---
+with tab_pizzas:
+    st.write("#### Alternative Mains & Sides")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Pepperoni Pizza** — `$8.99`")
+        if st.button("Add Pepperoni Pizza", key="add_p1"):
+            st.session_state.current_tray.append("Pepperoni Pizza")
+            st.rerun()
+            
+    with col2:
+        st.image("https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=60", width=300)
+        st.write("**Garlic Bread Fries** — `$4.25`")
+        if st.button("Add Garlic Bread Fries", key="add_p2"):
+            st.session_state.current_tray.append("Garlic Bread Fries")
+            st.rerun()
+
+st.write("---")
+
+# ---- ACTIVE MONITOR TRAY ----
+st.header("🛒 Active Ordering Tray")
+
+if not st.session_state.current_tray:
+    st.info("Your current tray is empty. Tap items above or load a quick preset combo profile from the sidebar panel!")
+else:
+    st.write("Items currently on your scanner:")
+    for item in st.session_state.current_tray:
+        st.write(f"- **{item}**")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60")
-        st.write("Classic Cheeseburger - $5.99")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=60")
-        st.write("Mushroom Swiss Burger - $5.99")
-        
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&auto=format&fit=crop&q=60")
-        st.write("Chicken Burger - $5.99")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1610440042657-612c34d95e9f?w=500&auto=format&fit=crop&q=60")
-        st.write("Avocado Grilled Chicken Burger - $6.99")
-
-    with st.expander("Place Order"):
-        burger_choice = st.radio("Which order do you want to save?", 
-             ['Classic Cheeseburger ($5.99)', 'Mushroom Swiss Burger ($5.99)', 
-              'Chicken Burger ($5.99)', 'Avocado Grilled Chicken Burger ($6.99)'], key="burger_radio")
-        if st.button("Submit", key="burger_submit"):
-            st.success(f"Your order for {burger_choice} has been placed successfully!")
-
-# --- DESSERTS ---
-elif menu == "Desserts":
-    st.title("Desserts Menu 🍰")
-    st.write("Delicious desserts waiting for you!")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1524351199679-46cddf530c04?w=500&auto=format&fit=crop&q=60")
-        st.write("Cheesecake - $3.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=500&auto=format&fit=crop&q=60")
-        st.write("Ice Cream Sundae - $3.50")
-        
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1519869325930-281384150729?w=500&auto=format&fit=crop&q=60")
-        st.write("Fruit Tart - $3.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&auto=format&fit=crop&q=60")
-        st.write("Tiramisu - $4.50")
-
-    with st.expander("Place Order"):
-        dessert_choice = st.radio("Which order do you want to save?", 
-             ['Cheesecake ($3.50)', 'Ice Cream Sundae ($3.50)', 
-              'Fruit Tart ($3.50)', 'Tiramisu ($4.50)'], key="dessert_radio")
-        if st.button("Submit", key="dessert_submit"):
-            st.success(f"Your order for {dessert_choice} has been placed successfully!")
-
-# --- DRINKS ---
-elif menu == "Drinks":
-    st.title("Drinks Menu 🥤")
-    st.write("Refresh your thirst with our refreshing drinks!")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=60")
-        st.write("Soda - $2.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1613478223719-2ab802602423?w=500&auto=format&fit=crop&q=60")
-        st.write("Orange Juice - $2.99")
-        
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=60")
-        st.write("Chocolate Latte With Whipped Cream - $3.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&auto=format&fit=crop&q=60")
-        st.write("Coffee - $2.99")
-
-    with st.expander("Place Order"):
-        drink_choice = st.radio("Which order do you want to save?", 
-             ['Soda ($2.50)', 'Orange Juice ($2.99)', 
-              'Chocolate Latte With Whipped Cream ($3.50)', 'Coffee ($2.99)'], key="drink_radio")
-        if st.button("Submit", key="drink_submit"):
-            st.success(f"Your order for {drink_choice} has been placed successfully!")
-
-# --- PIZZAS ---
-elif menu == "Pizzas":
-    st.title("Pizzas Menu 🍕")
-    st.write("Indulge in our mouthwatering pizzas!")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=500&auto=format&fit=crop&q=60")
-        st.write("Meat Lover's Pizza - $14.30")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&auto=format&fit=crop&q=60")
-        st.write("Hawaiian Pizza - $10.30")
-        
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop&q=60")
-        st.write("Pepperoni Pizza - $7.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=500&auto=format&fit=crop&q=60")
-        st.write("Margarita Pizza - $13.50")
-
-    with st.expander("Place Order"):
-        pizza_choice = st.radio("Which order do you want to save?", 
-             ['Meat Lovers Pizza ($14.30)', 'Hawaiian Pizza ($10.30)',
-              'Pepperoni Pizza ($7.50)', 'Margarita Pizza ($13.50)'], key="pizza_radio")
-        if st.button("Submit", key="pizza_submit"):
-            st.success(f"Your order for {pizza_choice} has been placed successfully!")
-
-# --- SIDES ---
-elif menu == "Sides":
-    st.title("Sides Menu 🍟")
-    st.write("Complete your meal with our delicious sides!")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500&auto=format&fit=crop&q=60")
-        st.write("Garlic Bread - $8.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1576107232684-1279f390859f?w=500&auto=format&fit=crop&q=60")
-        st.write("French Fries - $5.30")
-        
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("https://images.unsplash.com/photo-1531749668029-2db88e4b76ce?w=500&auto=format&fit=crop&q=60")
-        st.write("Mozzarella Sticks - $6.50")
-    with col2:
-        st.image("https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&auto=format&fit=crop&q=60")
-        st.write("Salad - $8.00")
-
-    with st.expander("Place Order"):
-        side_choice = st.radio("Which order do you want to save?", 
-             ['Garlic Bread ($8.50)', 'French Fries ($5.30)', 
-              'Mozzarella Sticks ($6.50)', 'Salad ($8.00)'], key="sides_radio")
-        if st.button("Submit", key="sides_submit"):
-            st.success(f"Your order for {side_choice} has been placed successfully!")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("Clear Active Tray", type="secondary"):
+            st.session_state.current_tray = []
+            st.rerun()
+    with c2:
+        if st.button("Confirm & Transmit Order To Kitchen", type="primary"):
+            ticket = random.randint(400, 599)
+            st.success(f"🎉 Order Transmitted! Ticket Reference Generated: **#{ticket}**")
+            st.session_state.current_tray = []
