@@ -7,11 +7,11 @@ This project is about a saved orders function that allows people to save their o
 Testing the E-Kiosk
 - To test the functionality, follow these steps:
 - Download the Python code named Main.py.
-- Import it into any Python-supported IDE or platform.
+- Import it into any Python-supported IDE or platform such as Visual Studio Code.
 - Run the application by typing:
   streamlit run Main.py
 
-
+http://localhost:8501/
 
 How It Works
 - Users can select their desired food and beverage items through the e-kiosk interface.
